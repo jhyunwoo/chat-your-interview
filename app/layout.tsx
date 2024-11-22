@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ReactNode } from "react";
+import Header from "@/app/components/header";
+import Sidebar from "@/app/sidebar";
 
 export const metadata: Metadata = {
   title: "Chat Your Interview",
@@ -14,7 +16,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Header />
+        <Sidebar />
+        {children}
+      </body>
     </html>
   );
 }
