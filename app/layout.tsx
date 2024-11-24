@@ -3,6 +3,7 @@ import "./globals.css";
 import { ReactNode } from "react";
 import Header from "@/app/components/header";
 import Sidebar from "@/app/sidebar";
+import Modal from "@/app/modal";
 
 export const metadata: Metadata = {
   title: "Chat Your Interview",
@@ -15,10 +16,11 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" className={'bg-neutral-50'}>
+    <html lang="en" className={"bg-neutral-50"}>
       <body>
         <Header />
         <Sidebar />
+        <Modal />
         {children}
       </body>
     </html>

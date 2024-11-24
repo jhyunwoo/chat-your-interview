@@ -19,7 +19,7 @@ export default function Sidebar() {
   return (
     <>
       <div
-        className={`z-10 w-2/3 pt-20 h-screen fixed top-0 right-0 ${isOpen ? "translate-x-0" : "translate-x-full"} bg-white p-4 transition-all transform-gpu`}
+        className={`z-20 w-2/3 pt-20 h-screen fixed top-0 right-0 ${isOpen ? "translate-x-0" : "translate-x-full"} bg-white p-4 transition-all transform-gpu`}
       >
         <div className={"flex flex-col gap-2"}>
           <NavButton href={"/"}>Home</NavButton>
@@ -29,7 +29,7 @@ export default function Sidebar() {
       </div>
       <div
         onClick={toggleSidebar}
-        className={`w-screen h-screen fixed top-0 left-0 bg-neutral-500/50 ${isOpen ? "" : "hidden"}`}
+        className={`w-screen h-screen fixed top-0 left-0 z-10 bg-neutral-500/50 ${isOpen ? "" : "hidden"}`}
       />
     </>
   );
