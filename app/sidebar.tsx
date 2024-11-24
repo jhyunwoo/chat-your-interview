@@ -19,7 +19,7 @@ export default function Sidebar() {
   return (
     <>
       <div
-        className={`z-10 w-2/3 pt-20 h-screen fixed top-0 right-0 ${isOpen ? "translate-x-0" : "translate-x-full"} bg-white p-4 transition-all`}
+        className={`z-10 w-2/3 pt-20 h-screen fixed top-0 right-0 ${isOpen ? "translate-x-0" : "translate-x-full"} bg-white p-4 transition-all transform-gpu`}
       >
         <div className={"flex flex-col gap-2"}>
           <NavButton href={"/"}>Home</NavButton>

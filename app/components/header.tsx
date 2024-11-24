@@ -5,7 +5,7 @@ export default function Header() {
   return (
     <div
       className={
-        "p-3 bg-emerald-950 text-white flex justify-between items-center fixed top-0 left-0 w-screen z-20"
+        "p-3 bg-neutral-100 text-black flex justify-between items-center fixed top-0 left-0 w-screen z-20"
       }
     >
       <Link href={"/"} className={"text-xl font-bold"}>
