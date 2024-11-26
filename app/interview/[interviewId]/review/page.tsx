@@ -95,7 +95,7 @@ export default async function InterviewReviewPage({
   return (
     <DefaultLayout className={"p-4 flex flex-col gap-2"}>
       <div className={"text-2xl font-bold"}>
-        네이버 Back-End 직군 인터뷰 리뷰
+        네이버 Back-End 직군 인터뷰 리뷰 {(await params).interviewId}
       </div>
       <div className={"bg-white p-4 rounded-xl shadow-xl"}>
         <div className={"text-neutral-600"}>총평</div>

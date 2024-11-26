@@ -1,38 +1,42 @@
 "use client";
 
 import { useMessages } from "@/lib/stores/messages";
+import { useEffect } from "react";
 
 export default function MessageList() {
   const { messages } = useMessages((state) => state);
 
-  // useEffect(() => {
-  //   const socket = new WebSocket("ws://your-websocket-server");
-  //
-  //   // 연결이 열리면 실행
-  //   socket.onopen = () => {
-  //     console.log("WebSocket 연결됨");
-  //   };
-  //
-  //   // 메시지를 받으면 실행
-  //   socket.onmessage = (event) => {
-  //     setMessages([...messages, event.data]);
-  //   };
-  //
-  //   // 에러 발생 시 실행
-  //   socket.onerror = (error) => {
-  //     console.error("WebSocket 에러:", error);
-  //   };
-  //
-  //   // 연결이 닫히면 실행
-  //   socket.onclose = () => {
-  //     console.log("WebSocket 연결 종료됨");
-  //   };
-  //
-  //   // 컴포넌트가 언마운트될 때 WebSocket 닫기
-  //   return () => {
-  //     socket.close();
-  //   };
-  // }, [messages, setMessages]);
+  useEffect(() => {
+    const socket = new WebSocket("ws://localhost:8080/ws/interview");
+
+    socket.onopen = () => {
+      console.log("WebSocket 연결됨");
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then((stream) => {
+          const mediaRecorder = new MediaRecorder(stream);
+
+          mediaRecorder.ondataavailable = (event) => {
+            if (socket.readyState === WebSocket.OPEN) {
+              socket.send(event.data);
+            }
+          };
+
+          mediaRecorder.start(100); // 100ms마다 데이터 전송
+        })
+        .catch((error) => {
+          console.error("마이크 접근 실패:", error);
+        });
+    };
+
+    socket.onerror = (error) => {
+      console.error("WebSocket 오류:", error);
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
 
   return (
     <div className={"h-full p-2 px-3 bg-white rounded-2xl shadow-lg"}>
