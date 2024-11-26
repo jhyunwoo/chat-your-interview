@@ -16,6 +16,6 @@ export default function DefaultLayout({
   className?: string;
 }) {
   return (
-    <div className={`pt-14 w-screen h-screen ${className}`}>{children}</div>
+    <div className={`pt-16 w-screen h-screen ${className}`}>{children}</div>
   );
 }
