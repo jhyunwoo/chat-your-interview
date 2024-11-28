@@ -17,9 +17,7 @@ export default function MessageList() {
           const mediaRecorder = new MediaRecorder(stream);
 
           mediaRecorder.ondataavailable = (event) => {
-            if (socket.readyState === WebSocket.OPEN) {
-              socket.send(event.data);
-            }
+            socket.send(event.data);
           };
 
           mediaRecorder.start(100); // 100ms마다 데이터 전송
@@ -27,6 +25,10 @@ export default function MessageList() {
         .catch((error) => {
           console.error("마이크 접근 실패:", error);
         });
+    };
+
+    socket.onmessage = (event) => {
+      console.log(event.data);
     };
 
     socket.onerror = (error) => {
