@@ -41,8 +41,12 @@ export default function MessageList() {
   }, []);
 
   return (
-    <div className={"h-full p-2 px-3 bg-white rounded-2xl shadow-lg"}>
-      <div className={"text-neutral-600 text-lg"}>Messages</div>
+    <div
+      className={
+        "h-full p-2 px-3 bg-neutral-900 rounded-2xl shadow-lg text-white"
+      }
+    >
+      <div className={"text-neutral-400 text-lg"}>Messages</div>
       {messages.map((message, index) => (
         <div key={index}>
           <div>{message.message}</div>

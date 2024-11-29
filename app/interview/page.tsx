@@ -16,7 +16,7 @@ export default function InterviewPage() {
       <div className={"w-full gap-2 grid grid-cols-3 "}>
         <Link
           className={
-            "p-4 rounded-xl ring-2 ring-green-500 hover:bg-neutral-100 bg-white shadow-lg transition text-center text-xl font-semibold"
+            "p-4 rounded-xl ring-2 ring-green-500 hover:bg-neutral-800 text-white bg-neutral-900 shadow-lg transition text-center text-xl font-semibold"
           }
           href={`/interview/1/review`}
         >

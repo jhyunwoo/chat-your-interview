@@ -43,10 +43,10 @@ export default function WebcamView() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className={
-            "w-full h-full bg-neutral-200 flex items-center justify-center rounded-2xl"
+            "w-full h-full bg-neutral-900 flex items-center justify-center rounded-2xl"
           }
         >
-          <div className={"text-xl font-semibold"}>Camera OFF</div>
+          <div className={"text-xl font-semibold text-white"}>Camera OFF</div>
         </motion.div>
       )}
     </motion.div>
