@@ -12,7 +12,9 @@ export default function InterviewPage() {
       >
         새로운 인터뷰
       </Link>
-      <div className={"text-2xl font-bold py-4"}>Interview History</div>
+      <div className={"text-2xl font-bold py-4 text-white"}>
+        Interview History
+      </div>
       <div className={"w-full gap-2 grid grid-cols-3 "}>
         <Link
           className={
