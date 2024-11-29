@@ -2,10 +2,31 @@
 
 import { WavRecorder, WavStreamPlayer } from "@/lib/wavtools";
 
+/**
+ * Running a local relay server will allow you to hide your API key
+ * and run custom logic on the server
+ *
+ * Set the local relay server address to:
+ * REACT_APP_LOCAL_RELAY_SERVER_URL=http://localhost:8081
+ *
+ * This will also require you to set OPENAI_API_KEY= in a `.env` file
+ * You can run it with `npm run relay`, in parallel with `npm start`
+ */
+const LOCAL_RELAY_SERVER_URL: string =
+  process.env.REACT_APP_LOCAL_RELAY_SERVER_URL || "";
+
 import { useEffect, useRef, useCallback, useState } from "react";
+
 import { RealtimeClient } from "@openai/realtime-api-beta";
-import { ItemType } from "@openai/realtime-api-beta/dist/lib/client";
+import { ItemType } from "@openai/realtime-api-beta/dist/lib/client.js";
+import { Map } from "@/app/components/Map";
+
+import { X, Edit, Zap, ArrowUp, ArrowDown } from "react-feather";
+
+import { isJsxOpeningLikeElement } from "typescript";
 import { WavRenderer } from "@/utils/wav_renderer";
+import { Button } from "@/app/components/button/Button";
+import { Toggle } from "@/app/components/toggle/Toggle";
 import { instructions } from "@/utils/conversation_config";
 
 /**
@@ -35,7 +56,20 @@ interface RealtimeEvent {
   event: { [key: string]: any };
 }
 
-export default function MessageList() {
+export default function ConsolePage() {
+  /**
+   * Ask user for API Key
+   * If we're using the local relay server, we don't need this
+   */
+  const apiKey = LOCAL_RELAY_SERVER_URL
+    ? ""
+    : localStorage.getItem("tmp::voice_api_key") ||
+      prompt("OpenAI API Key") ||
+      "";
+  if (apiKey !== "") {
+    localStorage.setItem("tmp::voice_api_key", apiKey);
+  }
+
   /**
    * Instantiate:
    * - WavRecorder (speech input)
@@ -49,7 +83,14 @@ export default function MessageList() {
     new WavStreamPlayer({ sampleRate: 24000 }),
   );
   const clientRef = useRef<RealtimeClient>(
-    new RealtimeClient({ url: "http://localhost:8080/ws/interview" }),
+    new RealtimeClient(
+      LOCAL_RELAY_SERVER_URL
+        ? { url: LOCAL_RELAY_SERVER_URL }
+        : {
+            apiKey: apiKey,
+            dangerouslyAllowAPIKeyInBrowser: true,
+          },
+    ),
   );
 
   /**
@@ -105,6 +146,18 @@ export default function MessageList() {
       return s;
     };
     return `${pad(m)}:${pad(s)}.${pad(hs)}`;
+  }, []);
+
+  /**
+   * When you click the API key
+   */
+  const resetAPIKey = useCallback(() => {
+    const apiKey = prompt("OpenAI API Key");
+    if (apiKey !== null) {
+      localStorage.clear();
+      localStorage.setItem("tmp::voice_api_key", apiKey);
+      window.location.reload();
+    }
   }, []);
 
   /**
@@ -449,91 +502,224 @@ export default function MessageList() {
     };
   }, []);
 
+  /**
+   * Render the application
+   */
   return (
-    <div
-      className={
-        "h-full p-2 px-3 bg-neutral-900 rounded-2xl text-white shadow-lg shadow-orange-300/50"
-      }
-    >
-      <div className={"text-neutral-400 text-lg"}>Messages</div>
-      <div className="visualization">
-        <div className="visualization-entry client">
-          <canvas ref={clientCanvasRef} />
+    <div data-component="ConsolePage" className={"text-white"}>
+      <div className="content-top">
+        <div className="content-title">
+          <img src="/openai-logomark.svg" />
+          <span>realtime console</span>
         </div>
-        <div className="visualization-entry server">
-          <canvas ref={serverCanvasRef} />
+        <div className="content-api-key">
+          {!LOCAL_RELAY_SERVER_URL && (
+            <Button
+              icon={Edit}
+              iconPosition="end"
+              buttonStyle="flush"
+              label={`api key: ${apiKey.slice(0, 3)}...`}
+              onClick={() => resetAPIKey()}
+            />
+          )}
         </div>
       </div>
-      <div className="content-block-body" ref={eventsScrollRef}>
-        {!realtimeEvents.length && `awaiting connection...`}
-        {realtimeEvents.map((realtimeEvent, i) => {
-          const count = realtimeEvent.count;
-          const event = { ...realtimeEvent.event };
-          if (event.type === "input_audio_buffer.append") {
-            event.audio = `[trimmed: ${event.audio.length} bytes]`;
-          } else if (event.type === "response.audio.delta") {
-            event.delta = `[trimmed: ${event.delta.length} bytes]`;
-          }
-          return (
-            <div className="event" key={event.event_id}>
-              <div className="event-timestamp">
-                {formatTime(realtimeEvent.time)}
+      <div className="content-main">
+        <div className="content-logs">
+          <div className="content-block events">
+            <div className="visualization">
+              <div className="visualization-entry client">
+                <canvas ref={clientCanvasRef} />
               </div>
-              <div className="event-details">
-                <div
-                  className="event-summary"
-                  onClick={() => {
-                    // toggle event details
-                    const id = event.event_id;
-                    const expanded = { ...expandedEvents };
-                    if (expanded[id]) {
-                      delete expanded[id];
-                    } else {
-                      expanded[id] = true;
-                    }
-                    setExpandedEvents(expanded);
-                  }}
-                >
-                  <div
-                    className={`event-source ${
-                      event.type === "error" ? "error" : realtimeEvent.source
-                    }`}
-                  >
-                    {realtimeEvent.source === "client" ? (
-                      <div>Arrow Up</div>
-                    ) : (
-                      <div>Arrow Down</div>
-                    )}
-                    <span>
-                      {event.type === "error" ? "error!" : realtimeEvent.source}
-                    </span>
-                  </div>
-                  <div className="event-type">
-                    {event.type}
-                    {count && ` (${count})`}
-                  </div>
-                </div>
-                {!!expandedEvents[event.event_id] && (
-                  <div className="event-payload">
-                    {JSON.stringify(event, null, 2)}
-                  </div>
-                )}
+              <div className="visualization-entry server">
+                <canvas ref={serverCanvasRef} />
               </div>
             </div>
-          );
-        })}
+            <div className="content-block-title">events</div>
+            <div className="content-block-body" ref={eventsScrollRef}>
+              {!realtimeEvents.length && `awaiting connection...`}
+              {realtimeEvents.map((realtimeEvent, i) => {
+                const count = realtimeEvent.count;
+                const event = { ...realtimeEvent.event };
+                if (event.type === "input_audio_buffer.append") {
+                  event.audio = `[trimmed: ${event.audio.length} bytes]`;
+                } else if (event.type === "response.audio.delta") {
+                  event.delta = `[trimmed: ${event.delta.length} bytes]`;
+                }
+                return (
+                  <div className="event" key={event.event_id}>
+                    <div className="event-timestamp">
+                      {formatTime(realtimeEvent.time)}
+                    </div>
+                    <div className="event-details">
+                      <div
+                        className="event-summary"
+                        onClick={() => {
+                          // toggle event details
+                          const id = event.event_id;
+                          const expanded = { ...expandedEvents };
+                          if (expanded[id]) {
+                            delete expanded[id];
+                          } else {
+                            expanded[id] = true;
+                          }
+                          setExpandedEvents(expanded);
+                        }}
+                      >
+                        <div
+                          className={`event-source ${
+                            event.type === "error"
+                              ? "error"
+                              : realtimeEvent.source
+                          }`}
+                        >
+                          {realtimeEvent.source === "client" ? (
+                            <ArrowUp />
+                          ) : (
+                            <ArrowDown />
+                          )}
+                          <span>
+                            {event.type === "error"
+                              ? "error!"
+                              : realtimeEvent.source}
+                          </span>
+                        </div>
+                        <div className="event-type">
+                          {event.type}
+                          {count && ` (${count})`}
+                        </div>
+                      </div>
+                      {!!expandedEvents[event.event_id] && (
+                        <div className="event-payload">
+                          {JSON.stringify(event, null, 2)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="content-block conversation">
+            <div className="content-block-title">conversation</div>
+            <div className="content-block-body" data-conversation-content>
+              {!items.length && `awaiting connection...`}
+              {items.map((conversationItem, i) => {
+                return (
+                  <div className="conversation-item" key={conversationItem.id}>
+                    <div className={`speaker ${conversationItem.role || ""}`}>
+                      <div>
+                        {(
+                          conversationItem.role || conversationItem.type
+                        ).replaceAll("_", " ")}
+                      </div>
+                      <div
+                        className="close"
+                        onClick={() =>
+                          deleteConversationItem(conversationItem.id)
+                        }
+                      >
+                        <X />
+                      </div>
+                    </div>
+                    <div className={`speaker-content`}>
+                      {/* tool response */}
+                      {conversationItem.type === "function_call_output" && (
+                        <div>{conversationItem.formatted.output}</div>
+                      )}
+                      {/* tool call */}
+                      {!!conversationItem.formatted.tool && (
+                        <div>
+                          {conversationItem.formatted.tool.name}(
+                          {conversationItem.formatted.tool.arguments})
+                        </div>
+                      )}
+                      {!conversationItem.formatted.tool &&
+                        conversationItem.role === "user" && (
+                          <div>
+                            {conversationItem.formatted.transcript ||
+                              (conversationItem.formatted.audio?.length
+                                ? "(awaiting transcript)"
+                                : conversationItem.formatted.text ||
+                                  "(item sent)")}
+                          </div>
+                        )}
+                      {!conversationItem.formatted.tool &&
+                        conversationItem.role === "assistant" && (
+                          <div>
+                            {conversationItem.formatted.transcript ||
+                              conversationItem.formatted.text ||
+                              "(truncated)"}
+                          </div>
+                        )}
+                      {conversationItem.formatted.file && (
+                        <audio
+                          src={conversationItem.formatted.file.url}
+                          controls
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="content-actions">
+            <Toggle
+              defaultValue={false}
+              labels={["manual", "vad"]}
+              values={["none", "server_vad"]}
+              onChange={(_, value) => changeTurnEndType(value)}
+            />
+            <div className="spacer" />
+            {isConnected && canPushToTalk && (
+              <Button
+                label={isRecording ? "release to send" : "push to talk"}
+                buttonStyle={isRecording ? "alert" : "regular"}
+                disabled={!isConnected || !canPushToTalk}
+                onMouseDown={startRecording}
+                onMouseUp={stopRecording}
+              />
+            )}
+            <div className="spacer" />
+            <Button
+              label={isConnected ? "disconnect" : "connect"}
+              iconPosition={isConnected ? "end" : "start"}
+              icon={isConnected ? X : Zap}
+              buttonStyle={isConnected ? "regular" : "action"}
+              onClick={
+                isConnected ? disconnectConversation : connectConversation
+              }
+            />
+          </div>
+        </div>
+        <div className="content-right">
+          <div className="content-block map">
+            <div className="content-block-title">get_weather()</div>
+            <div className="content-block-title bottom">
+              {marker?.location || "not yet retrieved"}
+              {!!marker?.temperature && (
+                <>
+                  <br />
+                  🌡️ {marker.temperature.value} {marker.temperature.units}
+                </>
+              )}
+              {!!marker?.wind_speed && (
+                <>
+                  {" "}
+                  🍃 {marker.wind_speed.value} {marker.wind_speed.units}
+                </>
+              )}
+            </div>
+          </div>
+          <div className="content-block kv">
+            <div className="content-block-title">set_memory()</div>
+            <div className="content-block-body content-kv">
+              {JSON.stringify(memoryKv, null, 2)}
+            </div>
+          </div>
+        </div>
       </div>
-      <div>
-        <button onClick={() => changeTurnEndType("none")}>manual</button>
-        <button onClick={() => changeTurnEndType("server_vad")}>vad</button>
-      </div>
-      {isConnected && canPushToTalk && (
-        <button
-          onClick={isConnected ? disconnectConversation : connectConversation}
-        >
-          Connect
-        </button>
-      )}
     </div>
   );
 }
