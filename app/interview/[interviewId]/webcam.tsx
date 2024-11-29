@@ -32,7 +32,7 @@ export default function WebcamView() {
       </button>
       {cam ? (
         <motion.div
-          className={"w-full h-full rounded-2xl"}
+          className={"w-full h-full rounded-2xl shadow-lg shadow-orange-300/50"}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >

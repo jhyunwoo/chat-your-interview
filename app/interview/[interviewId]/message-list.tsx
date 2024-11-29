@@ -43,7 +43,7 @@ export default function MessageList() {
   return (
     <div
       className={
-        "h-full p-2 px-3 bg-neutral-900 rounded-2xl shadow-lg text-white"
+        "h-full p-2 px-3 bg-neutral-900 rounded-2xl text-white shadow-lg shadow-orange-300/50"
       }
     >
       <div className={"text-neutral-400 text-lg"}>Messages</div>

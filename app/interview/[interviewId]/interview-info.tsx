@@ -13,7 +13,7 @@ export default function InterviewInfo({
     >
       <div
         className={
-          "text-lg font-semibold bg-neutral-900 text-white p-2 rounded-xl text-center shadow-lg"
+          "text-lg font-semibold bg-neutral-900 text-white p-2 rounded-xl text-center shadow-lg shadow-orange-300/50"
         }
       >
         네이버 Back-End 직군 인터뷰 {interviewId}

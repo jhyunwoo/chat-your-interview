@@ -22,7 +22,7 @@ export default function ControlPanel() {
   return (
     <div
       className={
-        "flex flex-col w-full p-4 bg-neutral-900 rounded-2xl gap-2 shadow-lg"
+        "flex flex-col w-full p-4 bg-neutral-900 rounded-2xl gap-2 shadow-lg shadow-orange-300/50"
       }
     >
       <button
