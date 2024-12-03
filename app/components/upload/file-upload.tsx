@@ -1,74 +1,43 @@
 "use client";
 
-import DefaultLayout from "@/app/components/default-layout";
-import { useState, useEffect, ChangeEvent, FormEvent } from "react";
-import useLocalStorage from "@/lib/hooks/uselocalstorage";
+import { ChangeEvent, useEffect, useState } from "react";
 
-interface FormData {
-  content: string;
-}
+const FileUpload = ({ keyName }: { keyName: string }) => {
+  const [text, setText] = useState<string>("");
 
-const FileUpload = ({
-  keyName
-}) => {
-  const [formData, setFormData] = useLocalStorage(keyName, []);
-
-  // const [formData, setFormData] = useState<Array<FormData>>([{
-  //   content: "",
-  // }]);
-
-  // useEffect(() => {
-  //   const savedValue = localStorage.getItem(keyName);
-  //   if (savedValue) {
-  //     setFormData(formData);
-  //   }
-  // }, [])
-
-  // useEffect(() => {
-  //   localStorage.setItem(keyName, JSON.stringify(formData));
-  // }, [formData]);
-
-  const handleSubmit = async (e: FormEvent): Promise<void> => {
-    e.preventDefault();
-
-    try {
-      setFormData((prevData) => [
-        ...prevData,
-        { content: e.target.content.value },
-      ]);
-    } catch (error) {
-      console.error("Error saving data:", error);
-    }
+  // onChange 핸들러 함수
+  const handleChange = (event: ChangeEvent<HTMLTextAreaElement>): void => {
+    setText(event.target.value);
   };
 
+  function onSubmit() {
+    localStorage.setItem(keyName, text);
+  }
+
+  useEffect(() => {
+    const prevData = localStorage.getItem(keyName);
+    if (prevData) {
+      setText(prevData);
+    }
+  }, [keyName]);
+
   return (
-    <DefaultLayout className={"flex items-center justify-center text-white"}>
-      <h1>{keyName}</h1>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>
-            :
-            <textarea className="text-black"
-              name="content"
-              value={formData.content}
-              required
-            />
-          </label>
-        </div>
-        <button type="submit">Save</button>
-      </form>
-      <label>
-        Saved {keyName}:
-        <div>
-          {formData.map((data, index) => (
-            <p key={index}>{data.content}</p>
-          ))}
-        </div>
-      </label>
-      </DefaultLayout>
+    <div className={"flex flex-col w-full gap-4 p-4 bg-neutral-900 rounded-xl"}>
+      <div>Resume Update</div>
+      <textarea
+        onChange={handleChange}
+        value={text}
+        className={"text-black w-full h-full p-2"}
+      />
+      <button
+        type={"button"}
+        onClick={onSubmit}
+        className={"p-1 bg-neutral-50 text-neutral-950 rounded-lg"}
+      >
+        Submit
+      </button>
+    </div>
   );
 };
 
 export default FileUpload;
-
-
