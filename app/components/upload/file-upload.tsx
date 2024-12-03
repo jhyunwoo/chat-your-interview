@@ -27,7 +27,7 @@ const FileUpload = ({ keyName }: { keyName: string }) => {
       <textarea
         onChange={handleChange}
         value={text}
-        className={"text-black w-full h-full p-2"}
+        className={"bg-neutral-800  w-full h-full p-2 rounded-lg"}
       />
       <button
         type={"button"}
