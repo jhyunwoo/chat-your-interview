@@ -62,7 +62,7 @@ const ResumeUpload: React.FC = () => {
         Saved Resumes:
         <div>
           {formData.map((data, index) => (
-            <p>{data.content}</p>
+            <p key={index}>{data.content}</p>
           ))}
         </div>
       </label>
