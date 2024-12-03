@@ -2,7 +2,6 @@
 
 import DefaultLayout from "@/app/components/default-layout";
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
-import useLocalStorage from "@/lib/hooks/uselocalstorage";
 
 interface FormData {
   content: string;
@@ -11,25 +10,26 @@ interface FormData {
 const FileUpload = ({
   keyName
 }) => {
-  const [formData, setFormData] = useLocalStorage(keyName, []);
+  const [formData, setFormData] = useState<Array<FormData>>([{
+    content: "",
+  }]);
 
-  // const [formData, setFormData] = useState<Array<FormData>>([{
-  //   content: "",
-  // }]);
+  useEffect(() => {
+    const savedValue = localStorage.getItem(keyName);
+    if (savedValue) {
+      setFormData(formData);
+    }
+  })
 
-  // useEffect(() => {
-  //   const savedValue = localStorage.getItem(keyName);
-  //   if (savedValue) {
-  //     setFormData(formData);
-  //   }
-  // }, [])
+  useEffect(() => {
+    localStorage.setItem(keyName, JSON.stringify(formData));
+  }, [formData]);
 
-  // useEffect(() => {
-  //   localStorage.setItem(keyName, JSON.stringify(formData));
-  // }, [formData]);
+  const [status, setStatus] = useState<string>("");
 
   const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
+    setStatus("Saving...");
 
     try {
       setFormData((prevData) => ([
@@ -38,6 +38,9 @@ const FileUpload = ({
       ]));
     } catch (error) {
       console.error("Error saving data:", error);
+      setStatus("An error occurred.");
+    } finally {
+      setStatus("Saved!")
     }
   };
 
@@ -65,10 +68,9 @@ const FileUpload = ({
           ))}
         </div>
       </label>
+      {status && <p>{status}</p>}
       </DefaultLayout>
   );
 };
 
 export default FileUpload;
-
-

@@ -6,7 +6,26 @@
  * @param init - fetch 설정
  * @constructor
  */
-export default async function API(path:string = "/",init:RequestInit){
-    const request = await fetch(`${process.env.API_URL!}${path}`, init)
+export default async function requestChat(
+    systemPrompt: string,
+    userPrompt: string,
+) {
+    const request = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}`, 
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`, 
+            },
+            body: JSON.stringify({
+                model: "gpt-4o",
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: userPrompt }
+                ],
+            }),
+        }
+    )
     return await request.json()
 }
