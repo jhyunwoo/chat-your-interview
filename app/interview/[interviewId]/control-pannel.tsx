@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import { useModal } from "@/lib/stores/modal";
 import { useWebsocketConnection } from "@/lib/stores/websocket-connection";
 import { ItemType } from "@openai/realtime-api-beta/dist/lib/client.js";
+import useEvaluation from "@/app/components/upload/create-evaluation";
+import { useEffect } from "react";
+import { useState } from "react";
 
 export default function ControlPanel({ items }: { items: ItemType[] }) {
   const { setModal } = useModal((state) => state);
@@ -11,7 +14,7 @@ export default function ControlPanel({ items }: { items: ItemType[] }) {
   const { connect, disconnect, isConnected } = useWebsocketConnection(
     (state) => state,
   );
-
+  
   function handleExit() {
     setModal("Are you really going to leave the interview?", () => {
       console.log(items);
@@ -21,6 +24,8 @@ export default function ControlPanel({ items }: { items: ItemType[] }) {
         results.push({ role: item.role, message: item.content[0].transcript });
       }
       localStorage.setItem("interviewMessages", JSON.stringify(results));
+
+
       disconnect();
       router.replace("/interview");
     });
