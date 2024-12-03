@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import DefaultLayout from "@/app/components/default-layout";
 import { useState, useEffect, ChangeEvent, FormEvent } from "react";
@@ -32,10 +32,10 @@ const FileUpload = ({
     e.preventDefault();
 
     try {
-      setFormData((prevData) => ([
+      setFormData((prevData) => [
         ...prevData,
-        {"content": e.target.content.value}
-      ]));
+        { content: e.target.content.value },
+      ]);
     } catch (error) {
       console.error("Error saving data:", error);
     }

@@ -1,22 +1,37 @@
 "use client";
 
-import { useQuestions } from "@/lib/stores/questions";
 import { useRouter } from "next/navigation";
 import { useModal } from "@/lib/stores/modal";
+import { useWebsocketConnection } from "@/lib/stores/websocket-connection";
+import { ItemType } from "@openai/realtime-api-beta/dist/lib/client.js";
 
-export default function ControlPanel() {
-  const { handleNextQuestion, questions } = useQuestions((state) => state);
+export default function ControlPanel({ items }: { items: ItemType[] }) {
   const { setModal } = useModal((state) => state);
   const router = useRouter();
+  const { connect, disconnect, isConnected } = useWebsocketConnection(
+    (state) => state,
+  );
 
   function handleExit() {
     setModal("Are you really going to leave the interview?", () => {
+      console.log(items);
+      const results = [];
+      for (const item of items) {
+        // @ts-expect-error -- skip
+        results.push({ role: item.role, message: item.content[0].transcript });
+      }
+      localStorage.setItem("interviewMessages", JSON.stringify(results));
+      disconnect();
       router.replace("/interview");
     });
   }
 
   function handlePause() {
-    setModal("Would you like to stop the interview?", () => {});
+    if (isConnected) {
+      disconnect();
+    } else {
+      connect();
+    }
   }
 
   return (
@@ -25,30 +40,20 @@ export default function ControlPanel() {
         "flex flex-col w-full p-4 bg-neutral-900 rounded-2xl gap-2 shadow-lg shadow-orange-300/50"
       }
     >
-      <button
-        type={"button"}
-        onClick={handleNextQuestion}
-        disabled={questions.length === 0}
-        className={
-          "bg-neutral-900 text-white p-2 rounded-full w-full disabled:bg-neutral-500 text-lg"
-        }
-      >
-        {questions.length > 0 ? "Next Question" : "Request Questions..."}
-      </button>
       <div
         className={
           "flex gap-2 items-center justify-around *:p-2 *:rounded-full *:w-full *:text-white *:text-lg"
         }
       >
         <button onClick={handleExit} type={"button"} className={"bg-red-600"}>
-          Exit
+          End Interview
         </button>
         <button
           onClick={handlePause}
           type={"button"}
           className={"bg-orange-600"}
         >
-          Pause
+          {isConnected ? "Disconnect" : "Connect"}
         </button>
       </div>
     </div>
