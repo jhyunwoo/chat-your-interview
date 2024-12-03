@@ -1,11 +1,19 @@
 "use client";
 
+import { ItemType } from "@openai/realtime-api-beta/dist/lib/client.js";
+
 const LOCAL_RELAY_SERVER_URL: string = "http://localhost:8081";
 
 import { WavRecorder, WavStreamPlayer } from "@/lib/wavtools";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { RealtimeClient } from "@openai/realtime-api-beta";
-import { ItemType } from "@openai/realtime-api-beta/dist/lib/client.js";
 import { WavRenderer } from "@/utils/wav_renderer";
 import { instructions } from "@/utils/conversation_config";
 import { useWebsocketConnection } from "@/lib/stores/websocket-connection";
@@ -17,10 +25,16 @@ interface RealtimeEvent {
   time: string;
   source: "client" | "server";
   count?: number;
-  event: { [key: string]: any };
+  event: { [key: string]: never };
 }
 
-export default function ConsolePage() {
+export default function MessageList({
+  items,
+  setItems,
+}: {
+  items: ItemType[];
+  setItems: Dispatch<SetStateAction<ItemType[]>>;
+}) {
   /**
    * Instantiate:
    * - WavRecorder (speech input)
@@ -56,7 +70,6 @@ export default function ConsolePage() {
    * - memoryKv is for set_memory() function
    * - coords, marker are for get_weather() function
    */
-  const [items, setItems] = useState<ItemType[]>([]);
   const [realtimeEvents, setRealtimeEvents] = useState<RealtimeEvent[]>([]);
   const { setIsConnected, setConnect, setDisconnect } = useWebsocketConnection(
     (state) => state,
@@ -85,10 +98,11 @@ export default function ConsolePage() {
 
     // Connect to realtime API
     await client.connect();
+    const prompt = localStorage.getItem("prompt");
     client.sendUserMessageContent([
       {
         type: `input_text`,
-        text: `You are an AI job interviewer designed to conduct professional interviews for various roles and industries. Your primary goals are to assess candidates’ qualifications, evaluate their problem-solving skills, and understand their motivation for the job. Tailor your questions to the specific job title and industry provided, and adapt based on the candidate's responses. Your tone should be professional, unbiased, and supportive. After each question, provide follow-up questions to further evaluate the candidate's fit. Avoid discriminatory, overly personal, or irrelevant questions. Ask around 4 major questions. Conclude each interview with a summary of strengths, areas for improvement, and overall impressions based on their answers`,
+        text: prompt ? prompt : "",
         // text: `For testing purposes, I want you to list ten car brands. Number each item, e.g. "one (or whatever number you are one): the item name".`
       },
     ]);
@@ -258,7 +272,7 @@ export default function ConsolePage() {
         }
       });
     });
-    client.on("error", (event: any) => console.error(event));
+    client.on("error", (event: never) => console.error(event));
     client.on("conversation.interrupted", async () => {
       const trackSampleOffset = await wavStreamPlayer.interrupt();
       if (trackSampleOffset?.trackId) {
@@ -266,7 +280,8 @@ export default function ConsolePage() {
         await client.cancelResponse(trackId, offset);
       }
     });
-    client.on("conversation.updated", async ({ item, delta }: any) => {
+    // @ts-expect-error -- skip
+    client.on("conversation.updated", async ({ item, delta }) => {
       const items = client.conversation.getItems();
       if (delta?.audio) {
         wavStreamPlayer.add16BitPCM(delta.audio, item.id);
