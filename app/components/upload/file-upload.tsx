@@ -1,23 +1,25 @@
-"use client"
+"use client";
 
 import DefaultLayout from "@/app/components/default-layout";
-import { useState, useEffect, ChangeEvent, FormEvent } from "react";
+import { useState, useEffect, FormEvent, FC } from "react";
 
 interface FormData {
   content: string;
 }
 
-const ResumeUpload: React.FC = () => {
-  const [formData, setFormData] = useState<Array<FormData>>([{
-    content: "",
-  }]);
+const ResumeUpload: FC = () => {
+  const [formData, setFormData] = useState<Array<FormData>>([
+    {
+      content: "",
+    },
+  ]);
 
   useEffect(() => {
     const savedValue = localStorage.getItem("resume");
     if (savedValue) {
       setFormData(formData);
     }
-  })
+  }, [formData]);
 
   useEffect(() => {
     localStorage.setItem("resume", JSON.stringify(formData));
@@ -30,15 +32,15 @@ const ResumeUpload: React.FC = () => {
     setStatus("Saving...");
 
     try {
-      setFormData((prevData) => ([
+      setFormData((prevData) => [
         ...prevData,
-        {"content": e.target.content.value}
-      ]));
+        { content: e.target.content.value },
+      ]);
     } catch (error) {
       console.error("Error saving data:", error);
       setStatus("An error occurred.");
     } finally {
-      setStatus("Saved!")
+      setStatus("Saved!");
     }
   };
 
@@ -49,7 +51,8 @@ const ResumeUpload: React.FC = () => {
         <div>
           <label>
             Message:
-            <textarea className="text-black"
+            <textarea
+              className="text-black"
               name="content"
               value={formData.content}
               required
@@ -67,7 +70,7 @@ const ResumeUpload: React.FC = () => {
         </div>
       </label>
       {status && <p>{status}</p>}
-      </DefaultLayout>
+    </DefaultLayout>
   );
 };
 
