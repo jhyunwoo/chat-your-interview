@@ -6,7 +6,7 @@
  * @param init - fetch 설정
  * @constructor
  */
-export default async function API(path:string = "/",init:RequestInit){
-    const request = await fetch(`${process.env.API_URL!}${path}`, init)
-    return await request.json()
+export default async function API(path: string = "/", init: RequestInit) {
+  const request = await fetch(`${process.env.API_URL!}${path}`, init);
+  return await request.json();
 }

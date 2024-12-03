@@ -1,18 +1,14 @@
 "use client";
 
-import { WavRecorder, WavStreamPlayer } from "@/lib/wavtools";
-
 const LOCAL_RELAY_SERVER_URL: string = "http://localhost:8081";
 
-import { useEffect, useRef, useCallback, useState } from "react";
-
+import { WavRecorder, WavStreamPlayer } from "@/lib/wavtools";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { RealtimeClient } from "@openai/realtime-api-beta";
 import { ItemType } from "@openai/realtime-api-beta/dist/lib/client.js";
-
-import { X } from "react-feather";
-
 import { WavRenderer } from "@/utils/wav_renderer";
 import { instructions } from "@/utils/conversation_config";
+import { useWebsocketConnection } from "@/lib/stores/websocket-connection";
 
 /**
  * Type for all event logs
@@ -26,19 +22,6 @@ interface RealtimeEvent {
 
 export default function ConsolePage() {
   /**
-   * Ask user for API Key
-   * If we're using the local relay server, we don't need this
-   */
-  const apiKey = LOCAL_RELAY_SERVER_URL
-    ? ""
-    : localStorage.getItem("tmp::voice_api_key") ||
-      prompt("OpenAI API Key") ||
-      "";
-  if (apiKey !== "") {
-    localStorage.setItem("tmp::voice_api_key", apiKey);
-  }
-
-  /**
    * Instantiate:
    * - WavRecorder (speech input)
    * - WavStreamPlayer (speech output)
@@ -51,14 +34,7 @@ export default function ConsolePage() {
     new WavStreamPlayer({ sampleRate: 24000 }),
   );
   const clientRef = useRef<RealtimeClient>(
-    new RealtimeClient(
-      LOCAL_RELAY_SERVER_URL
-        ? { url: LOCAL_RELAY_SERVER_URL }
-        : {
-            apiKey: apiKey,
-            dangerouslyAllowAPIKeyInBrowser: true,
-          },
-    ),
+    new RealtimeClient({ url: LOCAL_RELAY_SERVER_URL }),
   );
 
   /**
@@ -82,7 +58,9 @@ export default function ConsolePage() {
    */
   const [items, setItems] = useState<ItemType[]>([]);
   const [realtimeEvents, setRealtimeEvents] = useState<RealtimeEvent[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
+  const { setIsConnected, setConnect, setDisconnect } = useWebsocketConnection(
+    (state) => state,
+  );
 
   /**
    * Connect to conversation:
@@ -110,7 +88,7 @@ export default function ConsolePage() {
     client.sendUserMessageContent([
       {
         type: `input_text`,
-        text: `Hello!`,
+        text: `You are an AI job interviewer designed to conduct professional interviews for various roles and industries. Your primary goals are to assess candidates’ qualifications, evaluate their problem-solving skills, and understand their motivation for the job. Tailor your questions to the specific job title and industry provided, and adapt based on the candidate's responses. Your tone should be professional, unbiased, and supportive. After each question, provide follow-up questions to further evaluate the candidate's fit. Avoid discriminatory, overly personal, or irrelevant questions. Ask around 4 major questions. Conclude each interview with a summary of strengths, areas for improvement, and overall impressions based on their answers`,
         // text: `For testing purposes, I want you to list ten car brands. Number each item, e.g. "one (or whatever number you are one): the item name".`
       },
     ]);
@@ -136,11 +114,6 @@ export default function ConsolePage() {
 
     const wavStreamPlayer = wavStreamPlayerRef.current;
     await wavStreamPlayer.interrupt();
-  }, []);
-
-  const deleteConversationItem = useCallback(async (id: string) => {
-    const client = clientRef.current;
-    client.deleteItem(id);
   }, []);
 
   /**
@@ -299,12 +272,11 @@ export default function ConsolePage() {
         wavStreamPlayer.add16BitPCM(delta.audio, item.id);
       }
       if (item.status === "completed" && item.formatted.audio?.length) {
-        const wavFile = await WavRecorder.decode(
+        item.formatted.file = await WavRecorder.decode(
           item.formatted.audio,
           24000,
           24000,
         );
-        item.formatted.file = wavFile;
       }
       setItems(items);
     });
@@ -317,6 +289,14 @@ export default function ConsolePage() {
     };
   }, []);
 
+  useEffect(() => {
+    setConnect(() => {
+      connectConversation();
+      changeTurnEndType("server_vad");
+    });
+    setDisconnect(disconnectConversation);
+  }, [connectConversation, disconnectConversation, setConnect, setDisconnect]);
+
   /**
    * Render the application
    */
@@ -326,147 +306,65 @@ export default function ConsolePage() {
         "text-white w-full h-full p-2 shadow-lg shadow-orange-300/50 bg-neutral-900 rounded-lg"
       }
     >
-      <div className={"w-full flex flex-col gap-4"}>
+      <div className={"w-full flex gap-4"}>
         <div className={"w-full"}>
-          <canvas ref={clientCanvasRef} />
+          <canvas className={"w-full"} ref={serverCanvasRef} />
         </div>
         <div className={"w-full"}>
-          <canvas ref={serverCanvasRef} />
+          <canvas className={"w-full"} ref={clientCanvasRef} />
         </div>
       </div>
-      <div>
-        <div>
-          <div>
-            {/*<div ref={eventsScrollRef}>*/}
-            {/*  {realtimeEvents.map((realtimeEvent) => {*/}
-            {/*    const count = realtimeEvent.count;*/}
-            {/*    const event = { ...realtimeEvent.event };*/}
-            {/*    if (event.type === "input_audio_buffer.append") {*/}
-            {/*      event.audio = `[trimmed: ${event.audio.length} bytes]`;*/}
-            {/*    } else if (event.type === "response.audio.delta") {*/}
-            {/*      event.delta = `[trimmed: ${event.delta.length} bytes]`;*/}
-            {/*    }*/}
-            {/*    return (*/}
-            {/*      <div key={event.event_id}>*/}
-            {/*        <div>{formatTime(realtimeEvent.time)}</div>*/}
-            {/*        <div>*/}
-            {/*          <div*/}
-            {/*            onClick={() => {*/}
-            {/*              // toggle event details*/}
-            {/*              const id = event.event_id;*/}
-            {/*              const expanded = { ...expandedEvents };*/}
-            {/*              if (expanded[id]) {*/}
-            {/*                delete expanded[id];*/}
-            {/*              } else {*/}
-            {/*                expanded[id] = true;*/}
-            {/*              }*/}
-            {/*              setExpandedEvents(expanded);*/}
-            {/*            }}*/}
-            {/*          >*/}
-            {/*            <div*/}
-            {/*              className={`event-source ${*/}
-            {/*                event.type === "error"*/}
-            {/*                  ? "error"*/}
-            {/*                  : realtimeEvent.source*/}
-            {/*              }`}*/}
-            {/*            >*/}
-            {/*              {realtimeEvent.source === "client" ? (*/}
-            {/*                <ArrowUp />*/}
-            {/*              ) : (*/}
-            {/*                <ArrowDown />*/}
-            {/*              )}*/}
-            {/*              <span>*/}
-            {/*                {event.type === "error"*/}
-            {/*                  ? "error!"*/}
-            {/*                  : realtimeEvent.source}*/}
-            {/*              </span>*/}
-            {/*            </div>*/}
-            {/*            <div>*/}
-            {/*              {event.type}*/}
-            {/*              {count && ` (${count})`}*/}
-            {/*            </div>*/}
-            {/*          </div>*/}
-            {/*          {!!expandedEvents[event.event_id] && (*/}
-            {/*            <div>{JSON.stringify(event, null, 2)}</div>*/}
-            {/*          )}*/}
-            {/*        </div>*/}
-            {/*      </div>*/}
-            {/*    );*/}
-            {/*  })}*/}
-            {/*</div>*/}
-          </div>
-          <div>
-            <div data-conversation-content={true}>
-              {items.map((conversationItem) => (
-                <div
-                  key={conversationItem.id}
-                  className={`flex items-center justify-center ${conversationItem.role === "user" ? "ml-auto" : "mr-auto"}`}
-                >
-                  <div className={"flex"}>
-                    <div>
-                      {(
-                        conversationItem.role || conversationItem.type
-                      ).replaceAll("_", " ")}
-                    </div>
-                    <div
-                      onClick={() =>
-                        deleteConversationItem(conversationItem.id)
-                      }
-                    >
-                      <X />
-                    </div>
-                  </div>
-                  <div>
-                    {/* tool response */}
-                    {conversationItem.type === "function_call_output" && (
-                      <div>{conversationItem.formatted.output}</div>
-                    )}
-                    {/* tool call */}
-                    {!!conversationItem.formatted.tool && (
-                      <div>
-                        {conversationItem.formatted.tool.name}(
-                        {conversationItem.formatted.tool.arguments})
-                      </div>
-                    )}
-                    {!conversationItem.formatted.tool &&
-                      conversationItem.role === "user" && (
-                        <div>
-                          {conversationItem.formatted.transcript ||
-                            (conversationItem.formatted.audio?.length
-                              ? "(awaiting transcript)"
-                              : conversationItem.formatted.text ||
-                                "(item sent)")}
-                        </div>
-                      )}
-                    {!conversationItem.formatted.tool &&
-                      conversationItem.role === "assistant" && (
-                        <div>
-                          {conversationItem.formatted.transcript ||
-                            conversationItem.formatted.text ||
-                            "(truncated)"}
-                        </div>
-                      )}
-                  </div>
+      <div
+        data-conversation-content={true}
+        className={"w-full h-[400px] flex flex-col gap-1 p-1 overflow-y-hidden"}
+      >
+        {items.map((conversationItem) => (
+          <div
+            key={conversationItem.id}
+            className={`flex flex-col ${conversationItem.role === "user" ? "items-end" : "items-start"}`}
+          >
+            <div>
+              <div>
+                {(conversationItem.role || conversationItem.type).replaceAll(
+                  "_",
+                  " ",
+                )}
+              </div>
+            </div>
+            <div
+              className={`p-1 rounded-lg px-2 ${conversationItem.role === "user" ? "bg-neutral-950 ring-1 ring-white" : "bg-neutral-800"}`}
+            >
+              {/* tool response */}
+              {conversationItem.type === "function_call_output" && (
+                <div>{conversationItem.formatted.output}</div>
+              )}
+              {/* tool call */}
+              {!!conversationItem.formatted.tool && (
+                <div>
+                  {conversationItem.formatted.tool.name}(
+                  {conversationItem.formatted.tool.arguments})
                 </div>
-              ))}
+              )}
+              {!conversationItem.formatted.tool &&
+                conversationItem.role === "user" && (
+                  <div>
+                    {conversationItem.formatted.transcript ||
+                      (conversationItem.formatted.audio?.length
+                        ? "(awaiting transcript)"
+                        : conversationItem.formatted.text || "(item sent)")}
+                  </div>
+                )}
+              {!conversationItem.formatted.tool &&
+                conversationItem.role === "assistant" && (
+                  <div>
+                    {conversationItem.formatted.transcript ||
+                      conversationItem.formatted.text ||
+                      "(truncated)"}
+                  </div>
+                )}
             </div>
           </div>
-          <div>
-            <button
-              onClick={
-                isConnected
-                  ? disconnectConversation
-                  : () => {
-                      connectConversation();
-                      changeTurnEndType("server_vad");
-                    }
-              }
-              className={"p-2 rounded-full text-black bg-white"}
-            >
-              {isConnected ? "Disconnect" : "Connect"}
-            </button>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );
