@@ -118,10 +118,7 @@ export default function ConsolePage() {
   const [canPushToTalk, setCanPushToTalk] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
   const [memoryKv, setMemoryKv] = useState<{ [key: string]: any }>({});
-  const [coords, setCoords] = useState<Coordinates | null>({
-    lat: 37.775593,
-    lng: -122.418137,
-  });
+
   const [marker, setMarker] = useState<Coordinates | null>(null);
 
   /**
@@ -201,10 +198,6 @@ export default function ConsolePage() {
     setRealtimeEvents([]);
     setItems([]);
     setMemoryKv({});
-    setCoords({
-      lat: 37.775593,
-      lng: -122.418137,
-    });
     setMarker(null);
 
     const client = clientRef.current;
@@ -436,7 +429,6 @@ export default function ConsolePage() {
       },
       async ({ lat, lng, location }: { [key: string]: any }) => {
         setMarker({ lat, lng, location });
-        setCoords({ lat, lng, location });
         const result = await fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m`,
         );
