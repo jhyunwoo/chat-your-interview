@@ -20,7 +20,7 @@ export default function InterviewPage({
       <WebcamView />
       <InterviewInfo interviewId={use(params).interviewId}>
         <MessageList items={items} setItems={setItems} />
-        <ControlPanel items={items} />
+        <ControlPanel items={items} interviewId={use(params).interviewId} />
       </InterviewInfo>
     </DefaultLayout>
   );

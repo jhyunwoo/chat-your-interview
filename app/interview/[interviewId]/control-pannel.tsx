@@ -4,30 +4,32 @@ import { useRouter } from "next/navigation";
 import { useModal } from "@/lib/stores/modal";
 import { useWebsocketConnection } from "@/lib/stores/websocket-connection";
 import { ItemType } from "@openai/realtime-api-beta/dist/lib/client.js";
-import useEvaluation from "@/app/components/upload/create-evaluation";
-import { useEffect } from "react";
-import { useState } from "react";
+import createEvaluation from "@/lib/create-evaluation";
 
-export default function ControlPanel({ items }: { items: ItemType[] }) {
+export default function ControlPanel({
+  items,
+  interviewId,
+}: {
+  items: ItemType[];
+  interviewId: string;
+}) {
   const { setModal } = useModal((state) => state);
   const router = useRouter();
   const { connect, disconnect, isConnected } = useWebsocketConnection(
     (state) => state,
   );
-  
+
   function handleExit() {
-    setModal("Are you really going to leave the interview?", () => {
-      console.log(items);
+    setModal("Are you really going to leave the interview?", async () => {
       const results = [];
       for (const item of items) {
         // @ts-expect-error -- skip
         results.push({ role: item.role, message: item.content[0].transcript });
       }
       localStorage.setItem("interviewMessages", JSON.stringify(results));
-
-
+      await createEvaluation(results);
       disconnect();
-      router.replace("/interview");
+      router.push(`/interview/${interviewId}/evaluation`);
     });
   }
 

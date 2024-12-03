@@ -1,26 +1,26 @@
-"use client"
-
-import useLocalStorage from "@/lib/hooks/uselocalstorage";
 import requestChat from "@/lib/api";
 
-export default function useEvaluation(conversation: Array<Any>) {
-    const [evaluation, setEvaluation] = useLocalStorage("evaluation", []);
-
-    const systemPrompt = `
+const systemPrompt = `
         You are an AI job interviewer designed to conduct professional interviews for various roles and industries. 
         Your primary objectives are to assess candidates’ qualifications, technical skills, behavioral tendencies, 
         and motivation through 5 questions, including behavioral questions to evaluate soft skills and past experiences, 
         and role-specific questions to assess technical expertise. 
-    `
+    `;
 
-    const criteria = `
+const criteria = `
         This question is an initial question to ask about the overall experiences on enigineering of the interviewee.
         If the interviewee responded well to the question and provided specific projects or experiences with no contradiction, rate from 7-10
         If the interviewee responded well to the question with little or no specific projects or experiences, rate from 4-6
         If the interviewee responded badly to the question with little or no specific projects or experiences, rate from 1-3
-    `
+    `;
 
-    const userPrompt = `
+export default async function createEvaluation(
+  conversation: {
+    role: "user" | "assistant" | "system" | undefined;
+    message: string;
+  }[],
+) {
+  const userPrompt = `
         You will be given an answer to a certain interview question.
 
         The Question and Assessment point is provided below.
@@ -49,14 +49,10 @@ export default function useEvaluation(conversation: Array<Any>) {
         ]
     `;
 
-    const sendAndSetEvaluation = async () => {
-        const respond = await requestChat(
-            // system prompt랑 user prompt를 local storage의 real-time 응답으로 대체해야함
-            systemPrompt, userPrompt,
-        )
-
-        setEvaluation(respond.choices)
-    }
-
-    return [evaluation, sendAndSetEvaluation] as const
+  const respond = await requestChat(
+    // system prompt랑 user prompt를 local storage의 real-time 응답으로 대체해야함
+    systemPrompt,
+    userPrompt,
+  );
+  localStorage.setItem("evaluation", JSON.stringify(respond));
 }
