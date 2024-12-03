@@ -1,9 +1,11 @@
 "use client";
 
 import { ChangeEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const FileUpload = ({ keyName }: { keyName: string }) => {
   const [text, setText] = useState<string>("");
+  const router = useRouter();
 
   // onChange 핸들러 함수
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>): void => {
@@ -12,6 +14,7 @@ const FileUpload = ({ keyName }: { keyName: string }) => {
 
   function onSubmit() {
     localStorage.setItem(keyName, text);
+    router.push("/interview/1");
   }
 
   useEffect(() => {
