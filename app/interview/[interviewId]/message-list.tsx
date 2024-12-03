@@ -99,10 +99,19 @@ export default function MessageList({
     // Connect to realtime API
     await client.connect();
     const prompt = localStorage.getItem("prompt");
+    const resume = localStorage.getItem("resume");
     client.sendUserMessageContent([
       {
         type: `input_text`,
-        text: prompt ? prompt : "",
+        text:
+          prompt && resume
+            ? `
+        ${prompt}
+        
+        Resume:
+        ${resume}
+        `
+            : "",
         // text: `For testing purposes, I want you to list ten car brands. Number each item, e.g. "one (or whatever number you are one): the item name".`
       },
     ]);
