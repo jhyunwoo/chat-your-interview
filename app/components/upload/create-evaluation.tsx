@@ -1,10 +1,9 @@
 "use client"
 
 import useLocalStorage from "@/lib/hooks/uselocalstorage";
-import { CheckBadgeIcon } from "@heroicons/react/24/outline";
 import requestChat from "@/lib/api";
 
-export default function EvaluationButton() {
+export default function useEvaluation(conversation: Array<Any>) {
     const [evaluation, setEvaluation] = useLocalStorage("evaluation", []);
 
     const systemPrompt = `
@@ -12,23 +11,6 @@ export default function EvaluationButton() {
         Your primary objectives are to assess candidates’ qualifications, technical skills, behavioral tendencies, 
         and motivation through 5 questions, including behavioral questions to evaluate soft skills and past experiences, 
         and role-specific questions to assess technical expertise. 
-    `
-
-    const question = `
-        What was your position? Please explain how you have been working as a engineer, and a project that made you better technically.
-    `
-
-    const answer = `
-        I worked as a software engineer at google for 2 years.
-        The project I did was shole event management service project.
-        I worked at a fashion e-commerce platform for women in 40s and 50s.
-        There were recommendation biz team and MD team.
-        The recommendation team was in charge of handling discounts and sales events on the platform.
-        The gathered products from MDs whereas the products were collected from Sellers negotiated with each one of them. 
-        The problem here was that it takes too much of operating resources from negotiating products with Sellers to the Recommendation Team organizing events.
-        This project was to automate the original operating lifecycle which took too much of time and human resources.
-        It was considered to automate gathering, collecting, negotiating, selcting.. etc.
-        The hardest part was making a selecting service which was to select around 200-300,000 from over 500,000 products.
     `
 
     const criteria = `
@@ -43,9 +25,11 @@ export default function EvaluationButton() {
 
         The Question and Assessment point is provided below.
         Your task is to evaluate the answer based on the assessment point and provide a score (1-10) and rationale for each.
-        
-        question : ${question}
-        answer : ${answer}
+        We have answers to 5 questions to evaluate. Even if the conversation is not precisely 5 statements each, please focus on the 5 main questions the interviewer asked.
+        We have differenet criteria for different types of questions, so please consider it.
+        The assistant is an interviewer and the user is an interviewee from the following conversation.
+
+        conversation : ${conversation}
         criteria : ${criteria}
         
         Respond in a structured JSON format. WITHOUT ANY ADDITIONAL WORDS.
@@ -65,7 +49,7 @@ export default function EvaluationButton() {
         ]
     `;
 
-    const handleClick = async (e) => {
+    const sendAndSetEvaluation = async () => {
         const respond = await requestChat(
             // system prompt랑 user prompt를 local storage의 real-time 응답으로 대체해야함
             systemPrompt, userPrompt,
@@ -74,9 +58,5 @@ export default function EvaluationButton() {
         setEvaluation(respond.choices)
     }
 
-    return (
-        <button type={"button"} onClick={handleClick}>
-            <CheckBadgeIcon className={"size-3"} />
-        </button>
-    )
+    return [evaluation, sendAndSetEvaluation] as const
 }

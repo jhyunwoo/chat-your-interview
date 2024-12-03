@@ -9,30 +9,11 @@ export default function useLocalStorage<T>(keyName: string, initialValue: Array<
         if (savedValue) {
             setFormData(formData);
         }
-    })
+    }, [])
 
     useEffect(() => {
         localStorage.setItem(keyName, JSON.stringify(formData));
     }, [formData]);
-
-    const [status, setStatus] = useState<string>("");
-
-    const handleSubmit = async (e: FormEvent): Promise<void> => {
-        e.preventDefault();
-        setStatus("Saving...");
-
-        try {
-            setFormData((prevData) => ([
-            ...prevData,
-            {"content": e.target.content.value}
-            ]));
-        } catch (error) {
-            console.error("Error saving data:", error);
-            setStatus("An error occurred.");
-        } finally {
-            setStatus("Saved!")
-        }
-    };
 
   return [formData, setFormData] as const;
 }
