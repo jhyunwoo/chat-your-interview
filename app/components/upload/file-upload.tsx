@@ -25,7 +25,11 @@ const FileUpload = ({ keyName }: { keyName: string }) => {
   }, [keyName]);
 
   return (
-    <div className={"flex flex-col w-full gap-4 p-4 bg-neutral-900 rounded-xl"}>
+    <div
+      className={
+        "flex flex-col w-full gap-4 p-4  row-span-2 bg-neutral-900 rounded-xl"
+      }
+    >
       <div>Resume Update</div>
       <textarea
         onChange={handleChange}
